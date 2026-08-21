@@ -5,7 +5,7 @@
   "version": "1.0.0",
   "author": "SlowburnAZ",
   "license": "MIT",
-  "description": "OmaSlang — search Urban Dictionary slang from the bar. Definitions, examples, word of the day, and random words via unofficialurbandictionaryapi.com.",
+  "description": "OmaSlang — search Urban Dictionary slang from the bar. Definitions, examples, word of the day, and random words via the official Urban Dictionary API.",
   "kinds": ["bar-widget"],
   "entryPoints": {
     "barWidget": "BarWidget.qml"

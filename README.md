@@ -2,8 +2,8 @@
 
 Omarchy shell plugin that searches Urban Dictionary from the bar. Type a word
 or phrase, get definitions and examples in a panel anchored to the bar widget,
-plus a daily random Word of the Day. Backed by the free
-[Unofficial Urban Dictionary API](https://unofficialurbandictionaryapi.com).
+plus a daily random Word of the Day. Backed by the official
+[Urban Dictionary API](https://api.urbandictionary.com).
 
 <img width="563" height="411" alt="image" src="https://github.com/user-attachments/assets/7a65d9d5-3ea1-4d1e-81c4-13505928b7bd" />
 
@@ -45,7 +45,9 @@ file to force a refetch on the next panel open.
 
 ## Dependencies
 
-- `curl` (preinstalled on Omarchy) — all API calls run through it; no keys, no rate limits.
+- `curl` (preinstalled on Omarchy) — all API calls run through it; no keys required.
+- `magick` from [ImageMagick](https://imagemagick.org) (preinstalled on Omarchy) — converts Urban Dictionary WebP thumbnails to PNG so Qt can render them.
+- `mpv` (preinstalled on Omarchy) — plays pronunciation audio for entries that have it.
 
 ## Remove
 

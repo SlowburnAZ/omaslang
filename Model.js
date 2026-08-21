@@ -1,4 +1,4 @@
-var API_BASE = "https://unofficialurbandictionaryapi.com/api"
+var API_BASE = "https://api.urbandictionary.com/v0"
 
 function todayString(now) {
   var d = now || new Date()
@@ -7,12 +7,26 @@ function todayString(now) {
   return d.getFullYear() + "-" + (month < 10 ? "0" + month : month) + "-" + (day < 10 ? "0" + day : day)
 }
 
-function searchUrl(term, limit) {
-  return API_BASE + "/search?term=" + encodeURIComponent(term) + "&limit=" + limit
+function searchUrl(term) {
+  return API_BASE + "/define?term=" + encodeURIComponent(term)
 }
 
 function randomUrl() {
   return API_BASE + "/random"
+}
+
+function thumbCachePath(defid) {
+  return "/tmp/omaslang-thumbs/" + defid + ".png"
+}
+
+function thumbCommand(thumbUrl, cachePath) {
+  return ["bash", "-c",
+    'mkdir -p "$(dirname "$2")" && curl -fsS --max-time 8 "$1" | magick webp:- png:"$2"',
+    "bash", thumbUrl, cachePath]
+}
+
+function audioCommand(url) {
+  return ["mpv", "--no-video", "--really-quiet", url]
 }
 
 function stripMarkup(text) {
@@ -26,13 +40,17 @@ function cleanEntry(entry) {
   if (word === "") return null
   return {
     word: word,
-    meaning: stripMarkup(String(entry.meaning || "")).trim(),
+    meaning: stripMarkup(String(entry.definition || "")).trim(),
     example: stripMarkup(String(entry.example || "")).trim(),
-    contributor: String(entry.contributor || "").trim()
+    contributor: String(entry.author || "").trim(),
+    thumb: String(entry.udimg_url || "").trim(),
+    permalink: String(entry.permalink || "").trim(),
+    defid: String(entry.defid || "").trim(),
+    audio: String(entry.play_sound_url || "").trim()
   }
 }
 
-function parseResponse(raw) {
+function parseResponse(raw, maxResults) {
   var out = { ok: false, found: false, term: "", results: [], error: "" }
   var text = String(raw || "").trim()
   if (text === "") {
@@ -45,18 +63,17 @@ function parseResponse(raw) {
     out.error = "Bad response"
     return out
   }
-  if (!parsed || parsed.statusCode !== 200) {
-    out.error = "HTTP " + (parsed && parsed.statusCode ? parsed.statusCode : "error")
+  if (!parsed || !Array.isArray(parsed.list)) {
+    out.error = "Bad response"
     return out
   }
   out.ok = true
-  out.found = parsed.found === true
-  out.term = String(parsed.term || "").trim()
-  if (Array.isArray(parsed.data)) {
-    for (var i = 0; i < parsed.data.length; i++) {
-      var entry = cleanEntry(parsed.data[i])
-      if (entry) out.results.push(entry)
-    }
+  var list = parsed.list
+  var n = maxResults && maxResults > 0 ? Math.min(maxResults, list.length) : list.length
+  for (var i = 0; i < n; i++) {
+    var entry = cleanEntry(list[i])
+    if (entry) out.results.push(entry)
   }
+  out.found = out.results.length > 0
   return out
 }
