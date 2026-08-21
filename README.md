@@ -31,9 +31,13 @@ omarchy bar put slowburnaz.omaslang --section right
 ## Word of the Day
 
 On the first panel open (or shell start) each day, the plugin fetches a random
-word and pins it above the search field for the rest of the day. The word is
-cached in `~/.local/state/omarchy/omaslang-wotd.json`; delete that file to
-force a refetch.
+word and pins it above the search field for the rest of the day. Click the
+refresh button next to the **WORD OF THE DAY** header to pull a new one at any
+time. If the entry is long, the text area scrolls independently so the search
+field stays in view.
+
+The word is cached in `~/.local/state/omarchy/omaslang-wotd.json`; delete that
+file to force a refetch on the next panel open.
 
 ## Dependencies
 
