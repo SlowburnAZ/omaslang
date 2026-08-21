@@ -237,10 +237,25 @@ Panel {
             spacing: Style.space(4)
             visible: root.wotd !== null
 
-            PanelSectionHeader {
-              text: "WORD OF THE DAY"
-              foreground: root.barForeground
-              fontFamily: root.bar ? root.bar.fontFamily : Style.font.family
+            Row {
+              width: parent.width
+              spacing: Style.space(10)
+
+              PanelSectionHeader {
+                text: "WORD OF THE DAY"
+                foreground: root.barForeground
+                fontFamily: root.bar ? root.bar.fontFamily : Style.font.family
+                anchors.verticalCenter: parent.verticalCenter
+              }
+
+              Button {
+                iconText: "\uf021"
+                tooltipText: "New random word"
+                foreground: root.barForeground
+                accent: root.bar ? root.bar.urgent : Color.accent
+                fontFamily: root.bar ? root.bar.fontFamily : Style.font.family
+                onClicked: root.fetchWotd()
+              }
             }
 
             Text {
