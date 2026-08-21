@@ -5,6 +5,9 @@ or phrase, get definitions and examples in a panel anchored to the bar widget,
 plus a daily random Word of the Day. Backed by the free
 [Unofficial Urban Dictionary API](https://unofficialurbandictionaryapi.com).
 
+<img width="565" height="412" alt="image" src="https://github.com/user-attachments/assets/2dcfa697-96b4-45a2-ba71-97761e2bf8de" />
+
+
 ## Install
 
 From a git checkout:
