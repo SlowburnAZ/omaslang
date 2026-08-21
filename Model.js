@@ -15,6 +15,10 @@ function randomUrl() {
   return API_BASE + "/random"
 }
 
+function wotdUrl() {
+  return API_BASE + "/words_of_the_day"
+}
+
 function thumbCachePath(defid) {
   return "/tmp/omaslang-thumbs/" + defid + ".png"
 }
@@ -29,9 +33,23 @@ function audioCommand(url) {
   return ["mpv", "--no-video", "--really-quiet", url]
 }
 
+function copyCommand(text) {
+  return ["wl-copy", text]
+}
+
 function stripMarkup(text) {
   if (!text) return ""
   return String(text).replace(/\[([^\]\n]+)\]/g, "$1")
+}
+
+function linkifyMarkup(text, color) {
+  if (!text) return ""
+  var s = String(text)
+  s = s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+  s = s.replace(/\r\n|\r|\n/g, "<br>")
+  var css = color ? ' style="color: ' + color + '; text-decoration: underline"' : ' style="text-decoration: underline"'
+  s = s.replace(/\[([^\]\n]+)\]/g, '<a href="$1"' + css + '>$1</a>')
+  return s
 }
 
 function cleanEntry(entry) {
@@ -40,13 +58,14 @@ function cleanEntry(entry) {
   if (word === "") return null
   return {
     word: word,
-    meaning: stripMarkup(String(entry.definition || "")).trim(),
-    example: stripMarkup(String(entry.example || "")).trim(),
+    meaning: String(entry.definition || "").trim(),
+    example: String(entry.example || "").trim(),
     contributor: String(entry.author || "").trim(),
     thumb: String(entry.udimg_url || "").trim(),
     permalink: String(entry.permalink || "").trim(),
     defid: String(entry.defid || "").trim(),
-    audio: String(entry.play_sound_url || "").trim()
+    audio: String(entry.play_sound_url || "").trim(),
+    wotdDate: String(entry.date || "").trim()
   }
 }
 
@@ -75,5 +94,24 @@ function parseResponse(raw, maxResults) {
     if (entry) out.results.push(entry)
   }
   out.found = out.results.length > 0
+  return out
+}
+
+function historyPath(home) {
+  return home + "/.local/state/omarchy/omaslang-history.json"
+}
+
+function loadHistory(raw) {
+  try { var a = JSON.parse(raw || "[]") } catch (e) { return [] }
+  return Array.isArray(a) ? a : []
+}
+
+function addHistory(list, term) {
+  var q = (term || "").trim()
+  if (q === "") return list
+  var out = [q]
+  for (var i = 0; i < list.length; i++) {
+    if (list[i] !== q && out.length < 10) out.push(list[i])
+  }
   return out
 }
