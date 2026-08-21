@@ -258,45 +258,56 @@ Panel {
               }
             }
 
-            Text {
+            Flickable {
+              id: wotdScroll
               width: parent.width
-              visible: root.wotd !== null
-              text: root.wotd ? root.wotd.word : ""
-              textFormat: Text.PlainText
-              color: root.barForeground
-              font.family: root.bar ? root.bar.fontFamily : Style.font.family
-              font.pixelSize: Style.font.subtitle
-              font.bold: true
-              wrapMode: Text.WordWrap
-              elide: Text.ElideRight
-              maximumLineCount: 2
-            }
+              height: Math.min(wotdTexts.implicitHeight, Style.space(150))
+              interactive: wotdTexts.implicitHeight > height
+              clip: true
+              boundsBehavior: Flickable.StopAtBounds
+              contentWidth: width
+              contentHeight: wotdTexts.implicitHeight
 
-            Text {
-              width: parent.width
-              visible: root.wotd !== null && root.wotd.meaning !== ""
-              text: root.wotd ? root.wotd.meaning : ""
-              textFormat: Text.PlainText
-              color: root.barForeground
-              font.family: root.bar ? root.bar.fontFamily : Style.font.family
-              font.pixelSize: Style.font.body
-              wrapMode: Text.WordWrap
-              elide: Text.ElideRight
-              maximumLineCount: 4
-            }
+              Column {
+                id: wotdTexts
+                width: wotdScroll.width
+                spacing: Style.space(4)
 
-            Text {
-              width: parent.width
-              visible: root.wotd !== null && root.wotd.example !== ""
-              text: root.wotd ? "\u201C" + root.wotd.example + "\u201D" : ""
-              textFormat: Text.PlainText
-              color: Qt.darker(root.barForeground, 1.4)
-              font.family: root.bar ? root.bar.fontFamily : Style.font.family
-              font.pixelSize: Style.font.bodySmall
-              font.italic: true
-              wrapMode: Text.WordWrap
-              elide: Text.ElideRight
-              maximumLineCount: 3
+                Text {
+                  width: parent.width
+                  visible: root.wotd !== null
+                  text: root.wotd ? root.wotd.word : ""
+                  textFormat: Text.PlainText
+                  color: root.barForeground
+                  font.family: root.bar ? root.bar.fontFamily : Style.font.family
+                  font.pixelSize: Style.font.subtitle
+                  font.bold: true
+                  wrapMode: Text.WordWrap
+                }
+
+                Text {
+                  width: parent.width
+                  visible: root.wotd !== null && root.wotd.meaning !== ""
+                  text: root.wotd ? root.wotd.meaning : ""
+                  textFormat: Text.PlainText
+                  color: root.barForeground
+                  font.family: root.bar ? root.bar.fontFamily : Style.font.family
+                  font.pixelSize: Style.font.body
+                  wrapMode: Text.WordWrap
+                }
+
+                Text {
+                  width: parent.width
+                  visible: root.wotd !== null && root.wotd.example !== ""
+                  text: root.wotd ? "\u201C" + root.wotd.example + "\u201D" : ""
+                  textFormat: Text.PlainText
+                  color: Qt.darker(root.barForeground, 1.4)
+                  font.family: root.bar ? root.bar.fontFamily : Style.font.family
+                  font.pixelSize: Style.font.bodySmall
+                  font.italic: true
+                  wrapMode: Text.WordWrap
+                }
+              }
             }
           }
 
