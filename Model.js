@@ -19,13 +19,14 @@ function wotdUrl() {
   return API_BASE + "/words_of_the_day"
 }
 
-function thumbCachePath(defid) {
-  return "/tmp/omaslang-thumbs/" + defid + ".png"
+function thumbCachePath(home, defid) {
+  var safe = String(defid || "").replace(/[^0-9A-Za-z]/g, "")
+  return home + "/.cache/omarchy/omaslang/thumbs/" + safe + ".png"
 }
 
 function thumbCommand(thumbUrl, cachePath) {
   return ["bash", "-c",
-    'mkdir -p "$(dirname "$2")" && curl -fsS --max-time 8 "$1" | magick webp:- png:"$2"',
+    'mkdir -p "$(dirname "$2")" && rm -f "$2" && curl -fsS --max-time 8 "$1" | magick webp:- png:"$2"',
     "bash", thumbUrl, cachePath]
 }
 

@@ -491,7 +491,7 @@ Panel {
                   var url = modelData.thumb || ""
                   var defid = modelData.defid || ""
                   if (url === "" || defid === "") return
-                  var cachePath = Model.thumbCachePath(defid)
+                  var cachePath = Model.thumbCachePath(Quickshell.env("HOME"), defid)
                   thumbProc.command = Model.thumbCommand(url, cachePath)
                   thumbProc.running = true
                 }
@@ -500,7 +500,7 @@ Panel {
                   id: thumbProc
                   onExited: function(exitCode) {
                     if (exitCode === 0)
-                      resultDelegate.localThumb = "file://" + Model.thumbCachePath(modelData.defid)
+                      resultDelegate.localThumb = "file://" + Model.thumbCachePath(Quickshell.env("HOME"), modelData.defid)
                   }
                 }
 
