@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "id": "chris.omaslang",
+  "id": "SlowburnAZ.omaslang",
   "name": "OmaSlang",
   "version": "1.0.0",
-  "author": "chris",
+  "author": "SlowburnAZ",
   "license": "MIT",
   "description": "OmaSlang — search Urban Dictionary slang from the bar. Definitions, examples, word of the day, and random words via unofficialurbandictionaryapi.com.",
   "kinds": ["bar-widget"],
