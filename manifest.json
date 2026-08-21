@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "chris.omaslang",
+  "name": "OmaSlang",
+  "version": "1.0.0",
+  "author": "chris",
+  "license": "MIT",
+  "description": "OmaSlang — search Urban Dictionary slang from the bar. Definitions, examples, word of the day, and random words via unofficialurbandictionaryapi.com.",
+  "kinds": ["bar-widget"],
+  "entryPoints": {
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "OmaSlang",
+    "description": "Search Urban Dictionary slang from the bar",
+    "category": "Info",
+    "allowMultiple": false
+  }
+}
