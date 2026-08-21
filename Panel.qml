@@ -247,6 +247,7 @@ Panel {
               width: parent.width
               visible: root.wotd !== null
               text: root.wotd ? root.wotd.word : ""
+              textFormat: Text.PlainText
               color: root.barForeground
               font.family: root.bar ? root.bar.fontFamily : Style.font.family
               font.pixelSize: Style.font.subtitle
@@ -258,6 +259,7 @@ Panel {
               width: parent.width
               visible: root.wotd !== null && root.wotd.meaning !== ""
               text: root.wotd ? root.wotd.meaning : ""
+              textFormat: Text.PlainText
               color: root.barForeground
               font.family: root.bar ? root.bar.fontFamily : Style.font.family
               font.pixelSize: Style.font.body
@@ -268,6 +270,7 @@ Panel {
               width: parent.width
               visible: root.wotd !== null && root.wotd.example !== ""
               text: root.wotd ? "\u201C" + root.wotd.example + "\u201D" : ""
+              textFormat: Text.PlainText
               color: Qt.darker(root.barForeground, 1.4)
               font.family: root.bar ? root.bar.fontFamily : Style.font.family
               font.pixelSize: Style.font.bodySmall
@@ -337,6 +340,7 @@ Panel {
                 Text {
                   width: parent.width
                   text: modelData.word
+                  textFormat: Text.PlainText
                   color: root.barForeground
                   font.family: root.bar ? root.bar.fontFamily : Style.font.family
                   font.pixelSize: Style.font.subtitle
@@ -348,6 +352,7 @@ Panel {
                   width: parent.width
                   visible: modelData.meaning !== ""
                   text: modelData.meaning
+                  textFormat: Text.PlainText
                   color: root.barForeground
                   font.family: root.bar ? root.bar.fontFamily : Style.font.family
                   font.pixelSize: Style.font.body
@@ -358,6 +363,7 @@ Panel {
                   width: parent.width
                   visible: modelData.example !== ""
                   text: "\u201C" + modelData.example + "\u201D"
+                  textFormat: Text.PlainText
                   color: Qt.darker(root.barForeground, 1.4)
                   font.family: root.bar ? root.bar.fontFamily : Style.font.family
                   font.pixelSize: Style.font.bodySmall
