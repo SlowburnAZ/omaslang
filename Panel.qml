@@ -67,16 +67,23 @@ Panel {
     activeQuery = pendingQuery
     loading = true
     statusText = "Searching \u201C" + activeQuery + "\u201D\u2026"
-    searchProc.command = ["curl", "-fsS", "--max-time", "8", Model.searchUrl(activeQuery, root.resultLimit)]
+    searchProc.command = ["curl", "-fsS", "--max-time", "8", Model.searchUrl(activeQuery)]
     searchProc.running = true
   }
 
   function randomWord() {
+    debounce.stop()
     pendingQuery = ""
     activeQuery = ""
     loading = true
     statusText = "Rolling the dice\u2026"
     randomProc.running = true
+  }
+
+  function playAudio(url) {
+    if (!url) return
+    audioProc.command = Model.audioCommand(url)
+    audioProc.running = true
   }
 
   function applyResponse(response) {
@@ -127,7 +134,8 @@ Panel {
           date: Model.todayString(),
           word: entry.word,
           meaning: entry.meaning,
-          example: entry.example
+          example: entry.example,
+          audio: entry.audio
         }
         root.wotd = record
         wotdStore.setText(JSON.stringify(record))
@@ -150,7 +158,7 @@ Panel {
     id: searchProc
     stdout: StdioCollector {
       waitForEnd: true
-      onStreamFinished: root.applyResponse(Model.parseResponse(text))
+      onStreamFinished: root.applyResponse(Model.parseResponse(text, root.resultLimit))
     }
   }
 
@@ -171,6 +179,10 @@ Panel {
         root.loading = false
       }
     }
+  }
+
+  Process {
+    id: audioProc
   }
 
   Timer {
@@ -246,6 +258,16 @@ Panel {
                 foreground: root.barForeground
                 fontFamily: root.bar ? root.bar.fontFamily : Style.font.family
                 anchors.verticalCenter: parent.verticalCenter
+              }
+
+              Button {
+                visible: root.wotd !== null && (root.wotd.audio || "") !== ""
+                iconText: "\uf028"
+                tooltipText: "Play pronunciation"
+                foreground: root.barForeground
+                accent: root.bar ? root.bar.urgent : Color.accent
+                fontFamily: root.bar ? root.bar.fontFamily : Style.font.family
+                onClicked: if (root.wotd) root.playAudio(root.wotd.audio)
               }
 
               Button {
@@ -362,53 +384,114 @@ Panel {
             Repeater {
               model: root.results
 
-              Column {
+              Row {
+                id: resultDelegate
                 required property var modelData
                 required property int index
 
+                property string localThumb: ""
+
                 width: parent.width
-                spacing: Style.space(4)
+                spacing: Style.space(10)
 
-                Text {
-                  width: parent.width
-                  text: modelData.word
-                  textFormat: Text.PlainText
-                  color: root.barForeground
-                  font.family: root.bar ? root.bar.fontFamily : Style.font.family
-                  font.pixelSize: Style.font.subtitle
-                  font.bold: true
-                  wrapMode: Text.WordWrap
+                Component.onCompleted: {
+                  var url = modelData.thumb || ""
+                  var defid = modelData.defid || ""
+                  if (url === "" || defid === "") return
+                  var cachePath = Model.thumbCachePath(defid)
+                  thumbProc.command = Model.thumbCommand(url, cachePath)
+                  thumbProc.running = true
                 }
 
-                Text {
-                  width: parent.width
-                  visible: modelData.meaning !== ""
-                  text: modelData.meaning
-                  textFormat: Text.PlainText
-                  color: root.barForeground
-                  font.family: root.bar ? root.bar.fontFamily : Style.font.family
-                  font.pixelSize: Style.font.body
-                  wrapMode: Text.WordWrap
-                }
-
-                Text {
-                  width: parent.width
-                  visible: modelData.example !== ""
-                  text: "\u201C" + modelData.example + "\u201D"
-                  textFormat: Text.PlainText
-                  color: Qt.darker(root.barForeground, 1.4)
-                  font.family: root.bar ? root.bar.fontFamily : Style.font.family
-                  font.pixelSize: Style.font.bodySmall
-                  font.italic: true
-                  wrapMode: Text.WordWrap
+                Process {
+                  id: thumbProc
+                  onExited: function(exitCode) {
+                    if (exitCode === 0)
+                      resultDelegate.localThumb = "file://" + Model.thumbCachePath(modelData.defid)
+                  }
                 }
 
                 Rectangle {
-                  visible: index < root.results.length - 1
-                  width: parent.width
-                  height: Style.spacing.hairline
-                  color: root.barForeground
-                  opacity: 0.12
+                  id: resultThumbFrame
+                  visible: resultDelegate.localThumb !== "" && resultThumb.status !== Image.Error
+                  width: Style.space(120)
+                  height: Style.space(68)
+                  radius: Style.space(4)
+                  color: "transparent"
+                  clip: true
+
+                  Image {
+                    id: resultThumb
+                    anchors.fill: parent
+                    asynchronous: true
+                    cache: true
+                    fillMode: Image.PreserveAspectCrop
+                    sourceSize.width: 240
+                    source: resultDelegate.localThumb
+                  }
+                }
+
+                Column {
+                  width: parent.width - (resultThumbFrame.visible ? resultThumbFrame.width + parent.spacing : 0)
+                  spacing: Style.space(4)
+
+                  Row {
+                    width: parent.width
+                    spacing: Style.space(8)
+
+                    Text {
+                      width: parent.width - (soundBtn.visible ? soundBtn.implicitWidth + parent.spacing : 0)
+                      text: modelData.word
+                      textFormat: Text.PlainText
+                      color: root.barForeground
+                      font.family: root.bar ? root.bar.fontFamily : Style.font.family
+                      font.pixelSize: Style.font.subtitle
+                      font.bold: true
+                      wrapMode: Text.WordWrap
+                    }
+
+                    Button {
+                      id: soundBtn
+                      visible: (modelData.audio || "") !== ""
+                      iconText: "\uf028"
+                      tooltipText: "Play pronunciation"
+                      foreground: root.barForeground
+                      accent: root.bar ? root.bar.urgent : Color.accent
+                      fontFamily: root.bar ? root.bar.fontFamily : Style.font.family
+                      onClicked: root.playAudio(modelData.audio)
+                    }
+                  }
+
+                  Text {
+                    width: parent.width
+                    visible: modelData.meaning !== ""
+                    text: modelData.meaning
+                    textFormat: Text.PlainText
+                    color: root.barForeground
+                    font.family: root.bar ? root.bar.fontFamily : Style.font.family
+                    font.pixelSize: Style.font.body
+                    wrapMode: Text.WordWrap
+                  }
+
+                  Text {
+                    width: parent.width
+                    visible: modelData.example !== ""
+                    text: "\u201C" + modelData.example + "\u201D"
+                    textFormat: Text.PlainText
+                    color: Qt.darker(root.barForeground, 1.4)
+                    font.family: root.bar ? root.bar.fontFamily : Style.font.family
+                    font.pixelSize: Style.font.bodySmall
+                    font.italic: true
+                    wrapMode: Text.WordWrap
+                  }
+
+                  Rectangle {
+                    visible: index < root.results.length - 1
+                    width: parent.width
+                    height: Style.spacing.hairline
+                    color: root.barForeground
+                    opacity: 0.12
+                  }
                 }
               }
             }
@@ -416,7 +499,7 @@ Panel {
 
           Text {
             visible: root.hasResults
-            text: "via unofficialurbandictionaryapi.com"
+            text: "via api.urbandictionary.com"
             color: Qt.darker(root.barForeground, 1.6)
             font.family: root.bar ? root.bar.fontFamily : Style.font.family
             font.pixelSize: Style.font.caption
