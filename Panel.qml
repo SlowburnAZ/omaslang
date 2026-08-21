@@ -268,6 +268,8 @@ Panel {
               font.pixelSize: Style.font.subtitle
               font.bold: true
               wrapMode: Text.WordWrap
+              elide: Text.ElideRight
+              maximumLineCount: 2
             }
 
             Text {
@@ -279,6 +281,8 @@ Panel {
               font.family: root.bar ? root.bar.fontFamily : Style.font.family
               font.pixelSize: Style.font.body
               wrapMode: Text.WordWrap
+              elide: Text.ElideRight
+              maximumLineCount: 4
             }
 
             Text {
@@ -291,6 +295,8 @@ Panel {
               font.pixelSize: Style.font.bodySmall
               font.italic: true
               wrapMode: Text.WordWrap
+              elide: Text.ElideRight
+              maximumLineCount: 3
             }
           }
 
