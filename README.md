@@ -5,7 +5,7 @@ or phrase, get definitions and examples in a panel anchored to the bar widget,
 plus a daily random Word of the Day. Backed by the official
 [Urban Dictionary API](https://api.urbandictionary.com).
 
-<img width="563" height="411" alt="image" src="https://github.com/user-attachments/assets/7a65d9d5-3ea1-4d1e-81c4-13505928b7bd" />
+<img width="559" height="652" alt="OmaSlang preview" src="preview.png" />
 
 
 
