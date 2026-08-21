@@ -4,7 +4,7 @@ import qs.Ui
 
 BarWidget {
   id: root
-  moduleName: "SlowburnAZ.omaslang"
+  moduleName: "slowburnaz.omaslang"
 
   readonly property var panel: panelLoader.item
 

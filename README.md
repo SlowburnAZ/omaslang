@@ -16,9 +16,9 @@ omarchy plugin add https://github.com/SlowburnAZ/omaslang.git --enable
 Or copy the folder directly:
 
 ```sh
-cp -r . ~/.config/omarchy/plugins/SlowburnAZ.omaslang
-omarchy plugin enable SlowburnAZ.omaslang
-omarchy bar put SlowburnAZ.omaslang --section right
+cp -r . ~/.config/omarchy/plugins/slowburnaz.omaslang
+omarchy plugin enable slowburnaz.omaslang
+omarchy bar put slowburnaz.omaslang --section right
 ```
 
 ## Usage
@@ -42,5 +42,5 @@ force a refetch.
 ## Remove
 
 ```sh
-omarchy plugin remove SlowburnAZ.omaslang
+omarchy plugin remove slowburnaz.omaslang
 ```

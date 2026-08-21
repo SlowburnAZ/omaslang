@@ -8,7 +8,7 @@ import "Model.js" as Model
 
 Panel {
   id: root
-  moduleName: "SlowburnAZ.omaslang"
+  moduleName: "slowburnaz.omaslang"
   manageIpc: false
 
   property var anchorItem: null
