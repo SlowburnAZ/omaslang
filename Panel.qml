@@ -24,6 +24,7 @@ Panel {
   property string activeQuery: ""
 
   property var wotd: null
+  property var history: []
 
   function switchPanel(direction) {
     if (root.bar && typeof root.bar.switchPanelFrom === "function")
@@ -86,10 +87,33 @@ Panel {
     audioProc.running = true
   }
 
+  function searchTerm(term) {
+    input.text = term
+    debounce.stop()
+    root.search(term)
+  }
+
+  function copyText(text) {
+    if (!text) return
+    copyProc.command = Model.copyCommand(text)
+    copyProc.running = true
+  }
+
+  function recordHistory(term) {
+    var next = Model.addHistory(root.history, term)
+    root.history = next
+    historyStore.setText(JSON.stringify(next))
+  }
+
+  function loadHistory(raw) {
+    root.history = Model.loadHistory(raw)
+  }
+
   function applyResponse(response) {
     if (response.ok && response.found && response.results.length > 0) {
       results = response.results
       statusText = ""
+      if (activeQuery) root.recordHistory(activeQuery)
     } else if (response.ok && !response.found) {
       results = []
       statusText = "No definitions for \u201C" + activeQuery + "\u201D"
@@ -123,7 +147,7 @@ Panel {
 
   Process {
     id: wotdProc
-    command: ["curl", "-fsS", "--max-time", "8", Model.randomUrl()]
+    command: ["curl", "-fsS", "--max-time", "8", Model.wotdUrl()]
     stdout: StdioCollector {
       waitForEnd: true
       onStreamFinished: {
@@ -132,6 +156,7 @@ Panel {
         var entry = response.results[0]
         var record = {
           date: Model.todayString(),
+          wotdDate: entry.wotdDate,
           word: entry.word,
           meaning: entry.meaning,
           example: entry.example,
@@ -154,6 +179,17 @@ Panel {
     onFileChanged: reload()
   }
 
+  FileView {
+    id: historyStore
+    path: Model.historyPath(Quickshell.env("HOME"))
+    watchChanges: true
+    atomicWrites: true
+    printErrors: false
+    onLoaded: root.loadHistory(text())
+    onLoadFailed: root.loadHistory("[]")
+    onFileChanged: reload()
+  }
+
   Process {
     id: searchProc
     stdout: StdioCollector {
@@ -172,6 +208,7 @@ Panel {
         if (response.ok && response.results.length > 0) {
           root.results = response.results
           root.statusText = ""
+          root.recordHistory(response.results[0].word)
         } else {
           root.results = []
           root.statusText = response.error || "Could not fetch a random word"
@@ -183,6 +220,10 @@ Panel {
 
   Process {
     id: audioProc
+  }
+
+  Process {
+    id: copyProc
   }
 
   Timer {
@@ -260,6 +301,16 @@ Panel {
                 anchors.verticalCenter: parent.verticalCenter
               }
 
+              Text {
+                visible: root.wotd !== null && (root.wotd.wotdDate || "") !== ""
+                text: root.wotd ? root.wotd.wotdDate : ""
+                color: Qt.darker(root.barForeground, 1.5)
+                font.family: root.bar ? root.bar.fontFamily : Style.font.family
+                font.pixelSize: Style.font.bodySmall
+                font.italic: true
+                anchors.verticalCenter: parent.verticalCenter
+              }
+
               Button {
                 visible: root.wotd !== null && (root.wotd.audio || "") !== ""
                 iconText: "\uf028"
@@ -268,6 +319,16 @@ Panel {
                 accent: root.bar ? root.bar.urgent : Color.accent
                 fontFamily: root.bar ? root.bar.fontFamily : Style.font.family
                 onClicked: if (root.wotd) root.playAudio(root.wotd.audio)
+              }
+
+              Button {
+                visible: root.wotd !== null
+                iconText: "\uf0c5"
+                tooltipText: "Copy definition"
+                foreground: root.barForeground
+                accent: root.bar ? root.bar.urgent : Color.accent
+                fontFamily: root.bar ? root.bar.fontFamily : Style.font.family
+                onClicked: if (root.wotd) root.copyText(root.wotd.word + "\n" + root.wotd.meaning)
               }
 
               Button {
@@ -310,24 +371,26 @@ Panel {
                 Text {
                   width: parent.width
                   visible: root.wotd !== null && root.wotd.meaning !== ""
-                  text: root.wotd ? root.wotd.meaning : ""
-                  textFormat: Text.PlainText
+                  text: root.wotd ? Model.linkifyMarkup(root.wotd.meaning, root.barForeground) : ""
+                  textFormat: Text.RichText
                   color: root.barForeground
                   font.family: root.bar ? root.bar.fontFamily : Style.font.family
                   font.pixelSize: Style.font.body
                   wrapMode: Text.WordWrap
+                  onLinkActivated: function(link) { root.searchTerm(link) }
                 }
 
                 Text {
                   width: parent.width
                   visible: root.wotd !== null && root.wotd.example !== ""
-                  text: root.wotd ? "\u201C" + root.wotd.example + "\u201D" : ""
-                  textFormat: Text.PlainText
+                  text: root.wotd ? "\u201C" + Model.linkifyMarkup(root.wotd.example, Qt.darker(root.barForeground, 1.4)) + "\u201D" : ""
+                  textFormat: Text.RichText
                   color: Qt.darker(root.barForeground, 1.4)
                   font.family: root.bar ? root.bar.fontFamily : Style.font.family
                   font.pixelSize: Style.font.bodySmall
                   font.italic: true
                   wrapMode: Text.WordWrap
+                  onLinkActivated: function(link) { root.searchTerm(link) }
                 }
               }
             }
@@ -375,6 +438,36 @@ Panel {
             font.family: root.bar ? root.bar.fontFamily : Style.font.family
             font.pixelSize: Style.font.bodySmall
             font.italic: true
+          }
+
+          Column {
+            width: parent.width
+            spacing: Style.space(6)
+            visible: input.text === "" && !root.loading && !root.hasResults && root.history.length > 0
+
+            PanelSectionHeader {
+              text: "RECENT"
+              foreground: root.barForeground
+              fontFamily: root.bar ? root.bar.fontFamily : Style.font.family
+            }
+
+            Flow {
+              width: parent.width
+              spacing: Style.space(6)
+
+              Repeater {
+                model: root.history
+
+                Button {
+                  required property string modelData
+                  text: modelData
+                  foreground: root.barForeground
+                  accent: root.bar ? root.bar.urgent : Color.accent
+                  fontFamily: root.bar ? root.bar.fontFamily : Style.font.family
+                  onClicked: root.searchTerm(modelData)
+                }
+              }
+            }
           }
 
           Column {
@@ -440,7 +533,7 @@ Panel {
                     spacing: Style.space(8)
 
                     Text {
-                      width: parent.width - (soundBtn.visible ? soundBtn.implicitWidth + parent.spacing : 0)
+                      width: parent.width - actionsRow.implicitWidth - parent.spacing
                       text: modelData.word
                       textFormat: Text.PlainText
                       color: root.barForeground
@@ -450,39 +543,56 @@ Panel {
                       wrapMode: Text.WordWrap
                     }
 
-                    Button {
-                      id: soundBtn
-                      visible: (modelData.audio || "") !== ""
-                      iconText: "\uf028"
-                      tooltipText: "Play pronunciation"
-                      foreground: root.barForeground
-                      accent: root.bar ? root.bar.urgent : Color.accent
-                      fontFamily: root.bar ? root.bar.fontFamily : Style.font.family
-                      onClicked: root.playAudio(modelData.audio)
+                    Row {
+                      id: actionsRow
+                      spacing: Style.space(4)
+
+                      Button {
+                        id: soundBtn
+                        visible: (modelData.audio || "") !== ""
+                        iconText: "\uf028"
+                        tooltipText: "Play pronunciation"
+                        foreground: root.barForeground
+                        accent: root.bar ? root.bar.urgent : Color.accent
+                        fontFamily: root.bar ? root.bar.fontFamily : Style.font.family
+                        onClicked: root.playAudio(modelData.audio)
+                      }
+
+                      Button {
+                        id: copyBtn
+                        iconText: "\uf0c5"
+                        tooltipText: "Copy definition"
+                        foreground: root.barForeground
+                        accent: root.bar ? root.bar.urgent : Color.accent
+                        fontFamily: root.bar ? root.bar.fontFamily : Style.font.family
+                        onClicked: root.copyText(modelData.word + "\n" + modelData.meaning)
+                      }
                     }
                   }
 
                   Text {
                     width: parent.width
                     visible: modelData.meaning !== ""
-                    text: modelData.meaning
-                    textFormat: Text.PlainText
+                    text: Model.linkifyMarkup(modelData.meaning, root.barForeground)
+                    textFormat: Text.RichText
                     color: root.barForeground
                     font.family: root.bar ? root.bar.fontFamily : Style.font.family
                     font.pixelSize: Style.font.body
                     wrapMode: Text.WordWrap
+                    onLinkActivated: function(link) { root.searchTerm(link) }
                   }
 
                   Text {
                     width: parent.width
                     visible: modelData.example !== ""
-                    text: "\u201C" + modelData.example + "\u201D"
-                    textFormat: Text.PlainText
+                    text: "\u201C" + Model.linkifyMarkup(modelData.example, Qt.darker(root.barForeground, 1.4)) + "\u201D"
+                    textFormat: Text.RichText
                     color: Qt.darker(root.barForeground, 1.4)
                     font.family: root.bar ? root.bar.fontFamily : Style.font.family
                     font.pixelSize: Style.font.bodySmall
                     font.italic: true
                     wrapMode: Text.WordWrap
+                    onLinkActivated: function(link) { root.searchTerm(link) }
                   }
 
                   Rectangle {
